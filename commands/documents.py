@@ -15,8 +15,16 @@ def documents():
 @click.option('--format', 'output_format', default='table', 
               type=click.Choice(['table', 'json', 'yaml', 'simple']), 
               help='输出格式')
-def list_documents(dataset_id, output_format):
-    """列出数据集中的所有文档"""
+@click.option('--page', default=1, type=int, help='页码，默认为1')
+@click.option('--page-size', default=30, type=int, help='每页文档数量，默认为30')
+@click.option('--all', is_flag=True, help='获取所有文档（自动分页）')
+@click.option('--keywords', help='搜索关键词，匹配文档标题')
+@click.option('--orderby', default='create_time', 
+              type=click.Choice(['create_time', 'update_time']), 
+              help='排序字段，默认为create_time')
+@click.option('--desc/--asc', default=True, help='是否降序排列，默认为降序')
+def list_documents(dataset_id, output_format, page, page_size, all, keywords, orderby, desc):
+    """列出数据集中的文档"""
     try:
         client = APIClient()
         formatter = OutputFormatter(output_format)
@@ -30,17 +38,79 @@ def list_documents(dataset_id, output_format):
         # 使用API token设置认证头（Bearer格式）
         client.session.headers['Authorization'] = f"Bearer {api_token}"
         
-        # 调用API
-        response = client.get(f'/api/v1/datasets/{dataset_id}/documents')
+        all_docs = []
         
-        docs = response.get('documents')
-        if docs is None or docs is False or docs == {}:
-            docs = response.get('data')
-        # 兼容重试后返回{'docs': [], 'total': 0}
-        if isinstance(docs, dict) and 'docs' in docs:
-            docs = docs['docs']
-        if not isinstance(docs, list):
-            docs = []
+        if all:
+            # 获取所有文档，自动分页
+            current_page = 1
+            total_docs = 0
+            
+            while True:
+                # 构建查询参数
+                params = {
+                    'page': current_page,
+                    'page_size': page_size,
+                    'orderby': orderby,
+                    'desc': desc
+                }
+                
+                if keywords:
+                    params['keywords'] = keywords
+                
+                # 调用API
+                response = client.get(f'/api/v1/datasets/{dataset_id}/documents', params=params)
+                
+                # 解析响应数据
+                docs_data = response.get('data', {})
+                docs = docs_data.get('docs', [])
+                total = docs_data.get('total', 0)
+                
+                if not isinstance(docs, list):
+                    docs = []
+                
+                all_docs.extend(docs)
+                total_docs = total
+                
+                # 检查是否还有更多页面
+                if len(docs) < page_size or len(all_docs) >= total_docs:
+                    break
+                
+                current_page += 1
+                
+                # 显示进度
+                formatter.print_info(f"已获取 {len(all_docs)}/{total_docs} 个文档...")
+            
+            docs = all_docs
+            formatter.print_success(f"共获取到 {len(docs)} 个文档")
+            
+        else:
+            # 单页获取
+            # 构建查询参数
+            params = {
+                'page': page,
+                'page_size': page_size,
+                'orderby': orderby,
+                'desc': desc
+            }
+            
+            if keywords:
+                params['keywords'] = keywords
+            
+            # 调用API
+            response = client.get(f'/api/v1/datasets/{dataset_id}/documents', params=params)
+            
+            # 解析响应数据
+            docs_data = response.get('data', {})
+            docs = docs_data.get('docs', [])
+            total = docs_data.get('total', 0)
+            
+            if not isinstance(docs, list):
+                docs = []
+            
+            # 显示分页信息
+            start_num = (page - 1) * page_size + 1
+            end_num = min(page * page_size, total)
+            formatter.print_info(f"显示第 {start_num}-{end_num} 个文档，共 {total} 个文档")
         
         # 格式化输出
         if output_format == 'table':
