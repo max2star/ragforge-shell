@@ -1,8 +1,8 @@
 # RAGForge Shell
 
-一个功能完整的 RAGForge 命令行工具，提供数据集管理、文档上传、解析和检索等完整功能。
+一个功能完整的 RAGForge 命令行工具，提供数据集管理、文档上传、解析、检索和文件比较等完整功能。
 
-## 功能特性
+## ✨ 功能特性
 
 ### 🚀 核心功能
 - **用户管理**: 登录、注册、密码管理、第三方登录
@@ -10,6 +10,7 @@
 - **数据集管理**: 创建、查看、更新、删除数据集
 - **文档管理**: 上传、解析、查看、删除文档
 - **检索功能**: 多数据集检索、单数据集检索、单文档检索
+- **文件比较**: 智能比较待上传文件和已上传文件清单
 - **调试工具**: API测试、连接检查、原始调用
 
 ### 📁 支持的文件格式
@@ -18,7 +19,14 @@
 - **文本**: 纯文本文件 (.txt, .md)
 - **其他**: 根据系统配置支持更多格式
 
-## 快速开始
+### 🔍 文件比较功能
+- **智能匹配**: 支持文件名格式差异的模糊匹配
+- **多种输出格式**: 支持表格、JSON、YAML等格式
+- **详细统计**: 提供匹配率、文件数量等统计信息
+- **报告生成**: 可生成详细的比较报告文件
+- **进度显示**: 处理大量文件时显示进度
+
+## 🚀 快速开始
 
 ### 1. 安装依赖
 
@@ -29,23 +37,31 @@ uv pip install -r requirements.txt
 
 ### 2. 配置认证
 
-编辑 `config.yaml` 文件，设置你的认证信息：
+编辑 `config.yaml` 文件，设置你的 RAGForge API 信息（其他配置在登录之后会自动更新）：
 
 ```yaml
 api:
-  api_token: your-api-token
-  auth_token: your-auth-token
   base_url: http://localhost:9380
 ```
 
 ### 3. 基本使用
 
+#### 用户登录
 ```bash
-# 检查系统状态
-uv run python main.py system status
+# 用户登录
+uv run python main.py user login <username> <password>
 
 # 查看数据集列表
 uv run python main.py datasets list
+
+# 查看数据集文档列表
+uv run python main.py documents list <dataset_id>
+```
+
+#### 基本操作
+```bash
+# 检查系统状态
+uv run python main.py system status
 
 # 上传文档
 uv run python main.py documents upload <dataset_id> --file <file_path>
@@ -55,6 +71,9 @@ uv run python main.py documents parse <dataset_id> <document_id>
 
 # 检索文档内容
 uv run python main.py retrieval search "查询内容" <dataset_id>
+
+# 比较文件（新功能）
+python3 main.py compare files <待上传文件> <已上传文件>
 ```
 
 ## 完整工作流程
@@ -93,6 +112,18 @@ uv run python main.py documents parse-all <dataset_id>
 ```bash
 # 检索文档内容
 uv run python main.py retrieval search "查询内容" <dataset_id>
+```
+
+### 5. 文件比较（可选）
+```bash
+# 比较待上传文件和已上传文件清单
+python3 main.py compare files <待上传文件> <已上传文件>
+
+# 快速查看未上传的文件
+python3 main.py compare quick <待上传文件> <已上传文件>
+
+# 生成详细报告
+python3 main.py compare files <待上传文件> <已上传文件> --output report.txt
 ```
 
 ## 文档解析状态
@@ -139,7 +170,23 @@ uv run python main.py documents parse-all <dataset_id>
 uv run python main.py documents list <dataset_id> --format json | jq '.data.docs[] | {id, name, run, progress}'
 ```
 
-### 示例3: 自动化脚本
+### 示例3: 文件比较
+
+```bash
+# 比较待上传文件和已上传文件清单
+python3 main.py compare files /path/to/pending.txt /path/to/uploaded.txt
+
+# 快速查看比较结果
+python3 main.py compare quick /path/to/pending.txt /path/to/uploaded.txt
+
+# 生成详细报告
+python3 main.py compare files /path/to/pending.txt /path/to/uploaded.txt --output missing_files.txt
+
+# JSON格式输出
+python3 main.py compare files /path/to/pending.txt /path/to/uploaded.txt --format json
+```
+
+### 示例4: 自动化脚本
 
 ```bash
 # 运行完整的文件上传演示
@@ -192,6 +239,14 @@ uv run python main.py retrieval search "查询内容" <dataset_id>        # 检�
 uv run python main.py retrieval search-all "查询内容"                  # 多数据集检索
 ```
 
+### 文件比较 (compare)
+```bash
+python3 main.py compare files <待上传文件> <已上传文件>    # 详细比较文件
+python3 main.py compare quick <待上传文件> <已上传文件>    # 快速比较（简化输出）
+python3 main.py compare files <待上传文件> <已上传文件> --output report.txt  # 生成报告
+python3 main.py compare files <待上传文件> <已上传文件> --format json        # JSON格式输出
+```
+
 ### 调试功能 (debug)
 ```bash
 uv run python main.py debug test-api                      # API测试
@@ -199,36 +254,39 @@ uv run python main.py debug check-connection              # 连接检查
 uv run python main.py debug api-call <method> <endpoint> # 原始API调用
 ```
 
-## 目录结构
+## 📁 目录结构
 
 ```
 ragforge-shell/
-├── main.py                 # 主入口脚本
-├── api_client.py           # API客户端封装
-├── password_utils.py       # 密码加密工具
-├── reset_password.py       # 密码重置工具
-├── config.yaml             # 配置文件
-├── requirements.txt        # 依赖包列表
-├── commands/              # 命令模块目录
-│   ├── datasets.py        # 数据集管理命令
-│   ├── documents.py       # 文档管理命令
-│   ├── chunks.py          # 文档块管理命令
-│   ├── retrieval.py       # 检索功能命令
-│   ├── user.py            # 用户管理命令
-│   ├── system.py          # 系统管理命令
-│   └── debug.py           # 调试命令
-├── utils/                 # 工具函数目录
-│   └── output.py          # 输出格式化工具
-├── examples/              # 示例脚本目录
+├── main.py                    # 主入口脚本
+├── api_client.py              # API客户端封装
+├── password_utils.py          # 密码加密工具
+├── reset_password.py          # 密码重置工具
+├── config.yaml                # 配置文件
+├── requirements.txt           # 依赖包列表
+├── commands/                  # 命令模块目录
+│   ├── datasets.py           # 数据集管理命令
+│   ├── documents.py          # 文档管理命令
+│   ├── chunks.py             # 文档块管理命令
+│   ├── retrieval.py          # 检索功能命令
+│   ├── user.py               # 用户管理命令
+│   ├── system.py             # 系统管理命令
+│   ├── compare.py            # 文件比较命令 ⭐
+│   └── debug.py              # 调试命令
+├── utils/                    # 工具函数目录
+│   └── output.py             # 输出格式化工具
+├── examples/                 # 示例脚本目录
 │   ├── file_upload_example.py # 完整文件上传演示
-│   └── simple_upload.py   # 简单文件上传脚本
+│   └── simple_upload.py      # 简单文件上传脚本
 └── 文档文件
-    ├── README.md          # 主文档
-    ├── COMMANDS.md        # 命令参考文档
-    └── PROJECT_CLEANUP.md # 项目整理总结
+    ├── README.md             # 主文档
+    ├── COMMANDS.md           # 命令参考文档
+    └── PROJECT_CLEANUP.md    # 项目整理总结
 ```
 
-## 配置说明
+> ⭐ 标记表示新增的文件比较功能
+
+## ⚙️ 配置说明
 
 ### config.yaml 配置
 
@@ -249,7 +307,7 @@ output:
   max_width: 120
 ```
 
-### 输出格式
+### 📊 输出格式
 
 支持多种输出格式：
 - `table`: 表格格式（默认）
@@ -257,7 +315,7 @@ output:
 - `yaml`: YAML格式
 - `simple`: 简单列表格式
 
-## 故障排除
+## 🔧 故障排除
 
 ### 常见问题
 
@@ -279,6 +337,10 @@ output:
    - 解析是异步过程，需要等待
    - 使用 `documents status` 命令监控进度
 
+5. **文件比较错误**
+   - 确保文件路径正确且文件存在
+   - 检查文件编码格式（建议使用UTF-8）
+
 ### 调试命令
 
 ```bash
@@ -290,9 +352,12 @@ uv run python main.py debug check-connection
 
 # 查看系统状态
 uv run python main.py system status
+
+# 测试文件比较功能
+python3 main.py compare --help
 ```
 
-## 开发说明
+## 👨‍💻 开发说明
 
 ### 添加新命令
 
@@ -308,12 +373,25 @@ uv run python main.py --help
 
 # 测试特定命令
 uv run python main.py <command> --help
+
+# 测试文件比较功能
+python3 main.py compare files --help
 ```
 
-## 许可证
+## 📄 许可证
 
 本项目基于 Apache License 2.0 开源协议。
 
-## 贡献
+## 🤝 贡献
 
-欢迎提交 Issue 和 Pull Request 来改进这个项目！ 
+欢迎提交 Issue 和 Pull Request 来改进这个项目！
+
+---
+
+## 🆕 最新更新
+
+### v1.1.0 - 文件比较功能
+- ✅ 新增 `compare` 命令组
+- ✅ 支持智能文件比较和匹配
+- ✅ 多种输出格式支持
+- ✅ 详细统计和报告生成 
