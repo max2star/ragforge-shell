@@ -120,3 +120,6 @@ test_*.txt
 test_*.pdf
 temp_*
 *.tmp upload_file.txt
+shanghai_upload_list.txt
+upload_file_shanghai.txt
+upload_filepython
