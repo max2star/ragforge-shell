@@ -16,6 +16,7 @@ from commands.retrieval import retrieval
 from commands.user import user
 from commands.debug import debug
 from commands.system import system
+from commands.compare import compare
 
 
 @click.group()
@@ -47,6 +48,7 @@ cli.add_command(documents, name='documents')
 cli.add_command(chunks, name='chunks')
 cli.add_command(retrieval, name='retrieval')
 cli.add_command(system, name='system')
+cli.add_command(compare, name='compare')
 
 
 @cli.command()

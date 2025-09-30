@@ -13,6 +13,7 @@
 | `chunks` | 文档块管理 | `list`, `show`, `add`, `update`, `delete` |
 | `retrieval` | 检索功能 | `search`, `search-all` |
 | `debug` | 调试工具 | `test-api`, `check-connection`, `api-call` |
+| `compare` | 文件比较 | `files`, `quick` |
 
 ## 用户管理命令 (user)
 
@@ -269,4 +270,41 @@ done
 
 # 批量启动解析
 uv run python main.py documents parse-all <dataset_id>
-``` 
+```
+
+## 文件比较命令 (compare)
+
+### 文件比较功能
+```bash
+# 详细比较文件
+python3 main.py compare files <待上传文件> <已上传文件>
+
+# 快速比较（简化输出）
+python3 main.py compare quick <待上传文件> <已上传文件>
+
+# 比较并保存报告
+python3 main.py compare files <待上传文件> <已上传文件> --output report.txt
+
+# 指定输出格式
+python3 main.py compare files <待上传文件> <已上传文件> --format json
+python3 main.py compare files <待上传文件> <已上传文件> --format yaml
+```
+
+### 使用示例
+```bash
+# 比较中文图书文件和已上传文件清单
+python3 main.py compare files /root/中文图书 /root/ragforge-shell/upload_file.txt
+
+# 快速查看比较结果
+python3 main.py compare quick /root/中文图书 /root/ragforge-shell/upload_file.txt
+
+# 生成详细报告
+python3 main.py compare files /root/中文图书 /root/ragforge-shell/upload_file.txt --output missing_files.txt
+```
+
+### 功能特点
+- **智能匹配**: 支持文件名格式差异的模糊匹配
+- **多种输出格式**: 支持表格、JSON、YAML等格式
+- **详细统计**: 提供匹配率、文件数量等统计信息
+- **报告生成**: 可生成详细的比较报告文件
+- **进度显示**: 处理大量文件时显示进度 

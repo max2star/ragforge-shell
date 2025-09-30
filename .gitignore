@@ -119,4 +119,4 @@ Thumbs.db
 test_*.txt
 test_*.pdf
 temp_*
-*.tmp 
+*.tmp upload_file.txt
